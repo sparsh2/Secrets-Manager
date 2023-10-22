@@ -1,0 +1,6 @@
+Curl commands used:
+curl -X GET "localhost:8080/v1/GetInfo"
+curl -X POST "localhost:8080/login" -d '{"username":"user1", "password":"password1"}'
+
+curl -X GET "localhost:8080/v1/GetInfo" -b \
+"token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InVzZXIxIiwiZXhwIjoxNjk3OTA2MzY5fQ.knGRFU_AudVUgZBZ63iOhxqw2OVmyAzMtVdRp_snwcQ"
