@@ -16,9 +16,19 @@ var db = make(map[string]string)
 var jwtKey = []byte("my_secret_key")
 
 // For simplification, we're storing the users information as an in-memory map in our code
-var users = map[string]string{
-	"user1": "password1",
-	"user2": "password2",
+var users = map[string]User{
+	// "user1": "password1",
+	// "user2": "password2",
+	"user1": {
+		Username: "user1",
+		Password: "password1",
+		UserRole: WelcomeRole,
+	},
+	"user2": {
+		Username: "user2",
+		Password: "password2",
+		UserRole: CreateRole,
+	},
 }
 
 // Create a struct to read the username and password from the request body
@@ -31,22 +41,48 @@ type Credentials struct {
 // We add jwt.RegisteredClaims as an embedded type, to provide fields like expiry time
 type Claims struct {
 	Username string `json:"username"`
+	UserRole Role   `json:"role"`
 	jwt.RegisteredClaims
 }
 
+type Role string
+
+const (
+	WelcomeRole = "welcome-role"
+	CreateRole  = "create-role"
+)
+
+type Right string
+
+const (
+	WelcomeRight = "welcome-right"
+	CreateRight  = "create-right"
+)
+
+type User struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+	UserRole Role
+}
+
+var RolesMap = map[Role][]Right{
+	WelcomeRole: {WelcomeRight},
+	CreateRole:  {CreateRight},
+}
+
 func login(c *gin.Context) {
-	var creds Credentials
+	var user User
 	// Get the JSON body and decode into credentials
-	err := json.NewDecoder(c.Request.Body).Decode(&creds)
+	err := json.NewDecoder(c.Request.Body).Decode(&user)
 	if err != nil {
 		// If the structure of the body is wrong, return an HTTP error
 		c.Writer.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	expectedPass, ok := users[creds.Username]
+	expectedUser, ok := users[user.Username]
 
-	if !ok || expectedPass != creds.Password {
+	if !ok || expectedUser.Password != user.Password {
 		c.Writer.WriteHeader(http.StatusUnauthorized)
 		return
 	}
@@ -54,7 +90,8 @@ func login(c *gin.Context) {
 	expirationTime := time.Now().Add(time.Minute * 5)
 
 	claims := &Claims{
-		Username: creds.Username,
+		Username: user.Username,
+		UserRole: expectedUser.UserRole,
 		RegisteredClaims: jwt.RegisteredClaims{
 			// In JWT, the expiry time is expressed as unix milliseconds
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
@@ -72,11 +109,26 @@ func login(c *gin.Context) {
 	}
 
 	c.SetCookie("token", tokenString, int(expirationTime.Unix()), "/", "localhost", false, true)
-	c.Writer.WriteString(fmt.Sprintf("logged in successfully! %s\n", creds.Username))
+	c.Writer.WriteString(fmt.Sprintf("logged in successfully! %s\n", user.Username))
 }
 
 func getInfo(c *gin.Context) {
 	info, ok := c.Keys["claims"].(*Claims)
+	if !ok {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"Message": "internal server error"})
+	}
+	username := info.Username
+	rights, ok := RolesMap[users[username].UserRole]
+	if !ok {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"Message": "Unauthorized, invalid role"})
+		return
+	}
+
+	if rights[0] != WelcomeRight {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"Message": "Unauthorized"})
+		return
+	}
+
 	if !ok {
 		c.Writer.Write([]byte("user not found"))
 		return

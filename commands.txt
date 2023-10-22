@@ -1,6 +1,6 @@
 Curl commands used:
 curl -X GET "localhost:8080/v1/GetInfo"
-curl -X POST "localhost:8080/login" -d '{"username":"user1", "password":"password1"}'
+curl -X POST "localhost:8080/login" -d '{"username":"user2", "password":"password2"}' -c cookie.txt
 
 curl -X GET "localhost:8080/v1/GetInfo" -b \
-"token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InVzZXIxIiwiZXhwIjoxNjk3OTA2MzY5fQ.knGRFU_AudVUgZBZ63iOhxqw2OVmyAzMtVdRp_snwcQ"
+"token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InVzZXIyIiwicm9sZSI6ImNyZWF0ZS1yb2xlIiwiZXhwIjoxNjk3OTg5NjAzfQ.KSjFFecfkA5NrRPn0p0nYacLTNgmf6XDigx_XSN-0P0"
