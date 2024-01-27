@@ -33,13 +33,19 @@ app.use('/auth', require('./routes/auth'));
 app.use('/refresh', require('./routes/refresh'));
 app.use('/logout', require('./routes/logout'));
 
-app.use(verifyJWT)
+// app.use(verifyJWT)
 var mrouter = express.Router();
-mrouter.get('/',  (req, res) => {
-  console.log('here');
-  res.sendStatus(200)
-});
-app.use('/test', mrouter);
+mrouter.use(verifyJWT);
+
+//list all
+const {listAllPswHandler, createPswHandler, updatePswHandler, getPswHandler, deletePswHandler} = require('./controllers/passwordController')
+mrouter.get('/:uname', listAllPswHandler);
+mrouter.post('/:uname', createPswHandler);
+mrouter.patch('/:uname/:secretName', updatePswHandler);
+mrouter.get('/:uname/:secretName', getPswHandler);
+mrouter.delete('/:uname/:secretName', deletePswHandler);
+
+app.use('/api', mrouter);
 
 mongoose.connection.once('open', () => {
   console.log('Connected to MongoDB');
